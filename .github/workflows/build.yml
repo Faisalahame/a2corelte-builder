@@ -93,6 +93,12 @@ jobs:
         run: |
           cd workspace
           find hardware -type f -name "Android.mk" -exec sed -i "/LOCAL_MODULE_TAGS :=/d" {} +
+      - name: Fix Error 13 (Duplicate Bluetooth Module)
+        run: |
+          cd workspace
+          set +e
+          grep -rl "android.hardware.bluetooth@1.0-service" . --include="Android.mk" | grep -v "hardware/interfaces" | xargs rm -f
+          set -e
       - name: Build LineageOS 17.1
         run: |
           cd workspace
