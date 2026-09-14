@@ -1,4 +1,4 @@
-name: Build LineageOS for a2corelte
+name: Build LineageOS 17.1 for a2corelte
 
 on:
   workflow_dispatch:
@@ -7,58 +7,76 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Free up disk space
+      - name: Maximize disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost $AGENT_TOOLSDIRECTORY
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           sudo docker image prune -af
+          sudo apt clean
+          df -h
 
-      - name: Add Swap Space
+      - name: Fix swap (remove old, create new 16GB)
         run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
           sudo fallocate -l 16G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
+          free -h
 
-      - name: Install dependencies
+      - name: Install Android 10 build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python3 openjdk-17-jdk ccache
+          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python3 python-is-python3 openjdk-8-jdk ccache schedtool
+          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
 
       - name: Setup Git
         run: |
           git config --global user.name "Faisalahame"
           git config --global user.email "ahamedfaisal00008@gmail.com"
 
-      - name: Initialize Repo
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Initialize LineageOS 17.1
         run: |
           mkdir workspace
           cd workspace
-          repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --depth=1
+          repo init -u https://github.com/LineageOS/android.git -b lineage-17.1 --depth=1
 
-      - name: Clone YOUR Trees
+      - name: Clone device trees
         run: |
           cd workspace
           mkdir -p device/samsung/a2corelte
-          git clone https://github.com/Faisalahame/android_device_samsung_a2corelte.git device/samsung/a2corelte
+          git clone https://github.com/Faisalahame/android_device_samsung_a2corelte.git -b lineage-17.1 device/samsung/a2corelte
+
           mkdir -p vendor/samsung/a2corelte
           git clone https://github.com/Faisalahame/android_vendor_samsung_a2corelte.git vendor/samsung/a2corelte
+
           mkdir -p kernel/samsung/exynos7870
           git clone https://github.com/Faisalahame/android_kernel_samsung_exynos7870.git kernel/samsung/exynos7870
 
-      - name: Sync Source
+      - name: Sync source code
         run: |
           cd workspace
-          repo sync -c -j4 --force-sync --no-clone-bundle --no-tags
+          repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags
 
-      - name: Build ROM
+      - name: Build LineageOS 17.1
         run: |
           cd workspace
           source build/envsetup.sh
           breakfast a2corelte
           mka bacon -j$(nproc)
 
-      - name: Upload ROM Zip
+      - name: Upload ROM
         uses: actions/upload-artifact@v4
         with:
-          name: LineageOS-a2corelte-Unofficial
+          name: LineageOS-17.1-a2corelte
           path: workspace/out/target/product/a2corelte/lineage-*.zip
