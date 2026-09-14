@@ -68,10 +68,14 @@ jobs:
           mkdir -p hardware/samsung
           git clone https://github.com/LineageOS/android_hardware_samsung.git hardware/samsung
 
-      - name: Sync source code
+      - name: Sync source code (with auto-retry)
         run: |
           cd workspace
-          repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags
+          for i in {1..5}; do
+            repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags && break
+            echo "Server/Network error during sync. Retrying in 30 seconds... (Attempt $i)"
+            sleep 30
+          done
 
       - name: Patch obsolete variables
         run: |
