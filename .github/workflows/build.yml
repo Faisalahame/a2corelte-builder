@@ -9,10 +9,7 @@ jobs:
     steps:
       - name: Maximize disk space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
           sudo docker image prune -af
           sudo apt clean
           df -h
@@ -70,7 +67,7 @@ jobs:
           mkdir -p kernel/samsung/exynos7870
           git clone https://github.com/Faisalahame/android_kernel_samsung_exynos7870.git kernel/samsung/exynos7870
 
-          # 5. MISSING HARDWARE HALs (This fixes the exynos5.mk error!)
+          # 5. Samsung Hardware HALs
           mkdir -p hardware/samsung_slsi-cm/exynos5
           git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos5.git hardware/samsung_slsi-cm/exynos5
 
@@ -80,7 +77,10 @@ jobs:
           mkdir -p hardware/samsung_slsi-cm/openmax
           git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_openmax.git hardware/samsung_slsi-cm/openmax
           
-          # Official Samsung hardware repo (just in case)
+          # 6. FIX: The specific Exynos 7870 hardware HAL
+          mkdir -p hardware/samsung_slsi-cm/exynos7870
+          git clone https://github.com/LineageOS/android_hardware_samsung_slsi-cm_exynos7870.git -b lineage-17.1 hardware/samsung_slsi-cm/exynos7870
+
           mkdir -p hardware/samsung
           git clone https://github.com/LineageOS/android_hardware_samsung.git hardware/samsung
 
