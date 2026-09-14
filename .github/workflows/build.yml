@@ -83,6 +83,12 @@ jobs:
           find device/samsung -type f -name "*.mk" -exec sed -i 's/$(ANDROID_BUILD_TOP)/./g' {} +
           find device/samsung -type f -name "*.mk" -exec sed -i 's/ANDROID_BUILD_TOP/./g' {} +
 
+      - name: Fix Error 10 (Missing init file)
+        run: |
+          cd workspace
+          mkdir -p device/samsung/a2corelte/init
+          echo "#include <string>" > device/samsung/a2corelte/init/init_a2corelte.cpp
+          echo "void vendor_load_properties() {}" >> device/samsung/a2corelte/init/init_a2corelte.cpp
       - name: Build LineageOS 17.1
         run: |
           cd workspace
@@ -95,3 +101,15 @@ jobs:
         with:
           name: LineageOS-17.1-a2corelte
           path: workspace/out/target/product/a2corelte/lineage-*.zip
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            workspace/out/verbose.log.gz
+            workspace/out/soong.log
+            workspace/out/build.log
+            workspace/out/error.log
+          retention-days: 5
