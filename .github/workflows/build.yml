@@ -97,6 +97,7 @@ jobs:
         run: |
           cd workspace
           source build/envsetup.sh
+          export ALLOW_MISSING_DEPENDENCIES=true
           breakfast a2corelte
           mka bacon -j$(nproc)
 
