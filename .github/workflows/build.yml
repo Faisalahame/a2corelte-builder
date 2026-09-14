@@ -93,10 +93,8 @@ jobs:
           # Fix Error 11: Remove obsolete LOCAL_MODULE_TAGS
           find hardware -type f -name "Android.mk" -exec sed -i '/LOCAL_MODULE_TAGS :=/d' {} +
           
-          # Fix Error 13: Delete duplicate bluetooth module files outside official interfaces
-          set +e
-          find . -type f \( -name "Android.mk" -o -name "Android.bp" \) -not -path "*/hardware/interfaces/*" | xargs grep -l "android.hardware.bluetooth@1.0-service" | xargs rm -f
-          set -e
+          # Fix Error 13 (SILVER BULLET): Rename conflicting bluetooth service in Samsung trees
+          find . -path ./hardware/interfaces -prune -o -path ./system/bt -prune -o -type f \( -name "*.mk" -o -name "*.bp" -o -name "*.rc" \) -exec grep -l "android.hardware.bluetooth@1.0-service" {} + | xargs -r sed -i 's/android.hardware.bluetooth@1.0-service/samsung.disabled.bluetooth.service/g'
 
       - name: Build LineageOS 17.1
         run: |
