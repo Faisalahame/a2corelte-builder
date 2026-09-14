@@ -50,37 +50,22 @@ jobs:
       - name: Clone ALL device trees and hardware
         run: |
           cd workspace
-          
-          # 1. Main device tree
           mkdir -p device/samsung/a2corelte
           git clone https://github.com/Faisalahame/android_device_samsung_a2corelte.git -b lineage-17.1 device/samsung/a2corelte
-
-          # 2. Common tree
           mkdir -p device/samsung/exynos7870-common
           git clone https://github.com/Faisalahame/android_device_samsung_exynos7870-common.git device/samsung/exynos7870-common
-
-          # 3. Vendor blobs
           mkdir -p vendor/samsung/a2corelte
           git clone https://github.com/Faisalahame/android_vendor_samsung_a2corelte.git vendor/samsung/a2corelte
-
-          # 4. Kernel
           mkdir -p kernel/samsung/exynos7870
           git clone https://github.com/Faisalahame/android_kernel_samsung_exynos7870.git kernel/samsung/exynos7870
-
-          # 5. Samsung Hardware HALs
           mkdir -p hardware/samsung_slsi-cm/exynos5
           git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos5.git hardware/samsung_slsi-cm/exynos5
-
           mkdir -p hardware/samsung_slsi-cm/exynos
           git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos.git hardware/samsung_slsi-cm/exynos
-
           mkdir -p hardware/samsung_slsi-cm/openmax
           git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_openmax.git hardware/samsung_slsi-cm/openmax
-          
-          # 6. FIX: The specific Exynos 7870 hardware HAL
           mkdir -p hardware/samsung_slsi-cm/exynos7870
-          git clone https://github.com/LineageOS/android_hardware_samsung_slsi-cm_exynos7870.git -b lineage-17.1 hardware/samsung_slsi-cm/exynos7870
-
+          git clone https://github.com/Exynos7870/android_hardware_samsung_slsi-cm_exynos7870.git -b lineage-16.0 hardware/samsung_slsi-cm/exynos7870
           mkdir -p hardware/samsung
           git clone https://github.com/LineageOS/android_hardware_samsung.git hardware/samsung
 
