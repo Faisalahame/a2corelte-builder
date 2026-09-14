@@ -115,7 +115,7 @@ jobs:
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           breakfast a2corelte
-          mka otapackage -j$(nproc)
+          mka bacon -j$(nproc)
 
       - name: Upload ROM
         uses: actions/upload-artifact@v4
