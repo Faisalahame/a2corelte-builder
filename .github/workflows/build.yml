@@ -113,9 +113,7 @@ jobs:
         run: |
           cd workspace
           source build/envsetup.sh
-          export ALLOW_MISSING_DEPENDENCIES=true
-          breakfast a2corelte
-          mka bacon -j$(nproc)
+                    brunch a2corelte
 
       - name: Upload ROM
         uses: actions/upload-artifact@v4
