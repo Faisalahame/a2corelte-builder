@@ -96,6 +96,9 @@ jobs:
           # Fix Error 13 (SILVER BULLET): Rename conflicting bluetooth service in Samsung trees
           find . -path ./hardware/interfaces -prune -o -path ./system/bt -prune -o -type f \( -name "*.mk" -o -name "*.bp" -o -name "*.rc" \) -exec grep -l "android.hardware.bluetooth@1.0-service" {} + | xargs -r sed -i 's/android.hardware.bluetooth@1.0-service/samsung.disabled.bluetooth.service/g'
 
+                # Fix Error 14: Rename conflicting bluetooth impl library
+          find . -path ./hardware/interfaces -prune -o -path ./system/bt -prune -o -type f \( -name "*.mk" -o -name "*.bp" -o -name "*.rc" \) -exec grep -l "android.hardware.bluetooth@1.0-impl" {} + | xargs -r sed -i 's/android.hardware.bluetooth@1.0-impl/samsung.disabled.bluetooth.impl/g'
+
       - name: Build LineageOS 17.1
         run: |
           cd workspace
