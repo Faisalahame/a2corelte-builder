@@ -116,6 +116,11 @@ jobs:
         run: |
           cd workspace
           source build/envsetup.sh
+      - name: Fix libdisplaymodule dependency
+        run: |
+          cd workspace
+          find hardware/samsung_slsi-cm -name 'Android.mk' -exec sed -i 's/libdisplaymodule//g' {} +
+          echo "Successfully patched libdisplaymodule dependencies."
                     brunch a2corelte
 
       - name: Upload ROM
