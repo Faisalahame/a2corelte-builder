@@ -109,8 +109,8 @@ jobs:
                 # Fix Error 14: Rename conflicting bluetooth impl library
           find . -path ./hardware/interfaces -prune -o -path ./system/bt -prune -o -type f \( -name "*.mk" -o -name "*.bp" -o -name "*.rc" \) -exec grep -l "android.hardware.bluetooth@1.0-impl" {} + | xargs -r sed -i 's/android.hardware.bluetooth@1.0-impl/samsung.disabled.bluetooth.impl/g'
 
-                # Fix Error 18: Remove missing libdisplaymodule dependency from Exynos HWC
-          find hardware/samsung_slsi-cm -type f -name "Android.mk" -exec sed -i 's/libdisplaymodule//g' {} +
+                # Fix Error 18: Replace missing libdisplaymodule with libcutils
+          find hardware/samsung_slsi-cm -type f \( -name "Android.mk" -o -name "Android.bp" \) -exec sed -i 's/libdisplaymodule/libcutils/g' {} +
 
       - name: Build LineageOS 17.1
         run: |
