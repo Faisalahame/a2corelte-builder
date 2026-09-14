@@ -73,6 +73,12 @@ jobs:
           cd workspace
           repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags
 
+      - name: Patch obsolete variables
+        run: |
+          cd workspace
+          find device/samsung -type f -name "*.mk" -exec sed -i 's/$(ANDROID_BUILD_TOP)/./g' {} +
+          find device/samsung -type f -name "*.mk" -exec sed -i 's/ANDROID_BUILD_TOP/./g' {} +
+
       - name: Build LineageOS 17.1
         run: |
           cd workspace
