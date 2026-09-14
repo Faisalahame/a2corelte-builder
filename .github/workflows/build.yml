@@ -66,7 +66,7 @@ jobs:
           mkdir -p hardware/samsung_slsi-cm/exynos7870
           git clone https://github.com/Exynos7870/android_hardware_samsung_slsi-cm_exynos7870.git -b lineage-16.0 hardware/samsung_slsi-cm/exynos7870
           mkdir -p hardware/samsung
-          git clone https://github.com/LineageOS/android_hardware_samsung.git hardware/samsung
+          git clone https://github.com/LineageOS/android_hardware_samsung.git -b lineage-17.1 hardware/samsung
 
       - name: Sync source code (with auto-retry)
         run: |
