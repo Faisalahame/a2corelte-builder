@@ -122,7 +122,10 @@ jobs:
           find hardware/samsung_slsi-cm -name 'Android.mk' -exec sed -i 's/libdisplaymodule//g' {} +
           echo "Successfully patched libdisplaymodule dependencies."
                     source build/envsetup.sh
-                    brunch a2corelte
+                    mka target-files-package -j$(nproc)
+                              TF=$(ls out/target/product/a2corelte/obj/PACKAGING/target_files/*.zip | head -n1)
+                              echo "Target files: $TF"
+                              build/tools/releasetools/ota_from_target_files --block -p out/host/linux-x86 "$TF" out/target/product/a2corelte/lineage-17.1-UNOFFICIAL-a2corelte.zip
 
       - name: Upload ROM
         uses: actions/upload-artifact@v4
