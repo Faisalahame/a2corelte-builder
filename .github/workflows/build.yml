@@ -89,6 +89,10 @@ jobs:
           mkdir -p device/samsung/a2corelte/init
           echo "#include <string>" > device/samsung/a2corelte/init/init_a2corelte.cpp
           echo "void vendor_load_properties() {}" >> device/samsung/a2corelte/init/init_a2corelte.cpp
+      - name: Fix Error 11 (Obsolete Module Tags)
+        run: |
+          cd workspace
+          find hardware -type f -name "Android.mk" -exec sed -i "/LOCAL_MODULE_TAGS :=/d" {} +
       - name: Build LineageOS 17.1
         run: |
           cd workspace
