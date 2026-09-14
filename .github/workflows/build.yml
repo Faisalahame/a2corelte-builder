@@ -77,28 +77,27 @@ jobs:
             sleep 30
           done
 
-      - name: Patch obsolete variables
+      - name: Apply Pre-Build Patches
         run: |
           cd workspace
+          
+          # Fix Error 6: Patch obsolete ANDROID_BUILD_TOP
           find device/samsung -type f -name "*.mk" -exec sed -i 's/$(ANDROID_BUILD_TOP)/./g' {} +
           find device/samsung -type f -name "*.mk" -exec sed -i 's/ANDROID_BUILD_TOP/./g' {} +
-
-      - name: Fix Error 10 (Missing init file)
-        run: |
-          cd workspace
+          
+          # Fix Error 10: Create missing init_a2corelte.cpp
           mkdir -p device/samsung/a2corelte/init
-          echo "#include <string>" > device/samsung/a2corelte/init/init_a2corelte.cpp
-          echo "void vendor_load_properties() {}" >> device/samsung/a2corelte/init/init_a2corelte.cpp
-      - name: Fix Error 11 (Obsolete Module Tags)
-        run: |
-          cd workspace
-          find hardware -type f -name "Android.mk" -exec sed -i "/LOCAL_MODULE_TAGS :=/d" {} +
-      - name: Fix Error 13 (Duplicate Bluetooth Module)
-        run: |
-          cd workspace
+          echo '#include <string>' > device/samsung/a2corelte/init/init_a2corelte.cpp
+          echo 'void vendor_load_properties() {}' >> device/samsung/a2corelte/init/init_a2corelte.cpp
+          
+          # Fix Error 11: Remove obsolete LOCAL_MODULE_TAGS
+          find hardware -type f -name "Android.mk" -exec sed -i '/LOCAL_MODULE_TAGS :=/d' {} +
+          
+          # Fix Error 13: Delete duplicate bluetooth module files outside official interfaces
           set +e
-          grep -rl "android.hardware.bluetooth@1.0-service" . --include="Android.mk" | grep -v "hardware/interfaces" | xargs rm -f
+          find . -type f \( -name "Android.mk" -o -name "Android.bp" \) -not -path "*/hardware/interfaces/*" | xargs grep -l "android.hardware.bluetooth@1.0-service" | xargs rm -f
           set -e
+
       - name: Build LineageOS 17.1
         run: |
           cd workspace
