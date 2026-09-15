@@ -10,137 +10,101 @@ jobs:
       - name: Maximize disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
-          sudo docker image prune -af
+          sudo rm -rf /usr/local/lib/android /opt/hostedtoolcache /usr/local/.ghcup /usr/share/swift /usr/share/miniconda
+          sudo rm -rf /usr/share/gradle* /usr/share/ant /usr/share/sbt /usr/share/scala
+          sudo rm -rf /opt/pipx_bin /usr/local/share/vcpkg /usr/local/share/edge_driver /usr/local/share/chromedriver-linux64
+          sudo docker image prune -af || true
           sudo apt clean
-          df -h
+          df -h /
 
-      - name: ULTIMATE Disk Space Cleanup
+      - name: Fix swap (16G)
         run: |
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache
-          sudo rm -rf /usr/local/share/boost
-          sudo apt clean
-          df -h
-
-      - name: Fix swap
-        run: |
-          sudo swapoff -a
+          sudo swapoff -a || true
           sudo rm -f /swapfile
           sudo fallocate -l 16G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
+          free -h
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python3 python-is-python3 openjdk-8-jdk ccache schedtool bc gperf imagemagick lib32readline-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 lzop pngcrush rsync squashfs-tools
+          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig python3 python-is-python3 ccache schedtool bc gperf imagemagick liblz4-tool libsdl1.2-dev libssl-dev libxml2 lzop pngcrush rsync squashfs-tools git-lfs
+          git lfs install
 
-      - name: Setup Git
+      - name: Setup Git and repo
         run: |
           git config --global user.name "Faisalahame"
           git config --global user.email "ahamedfaisal00008@gmail.com"
-
-      - name: Install repo tool
-        run: |
           mkdir -p ~/bin
-          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Initialize LineageOS 17.1
         run: |
-          mkdir workspace
+          mkdir -p workspace
           cd workspace
-          repo init -u https://github.com/LineageOS/android.git -b lineage-17.1 --depth=1
+          ~/bin/repo init -u https://github.com/LineageOS/android.git -b lineage-17.1 --depth=1 --git-lfs
 
-      - name: Clone ALL device trees and hardware
+      - name: Clone device trees and hardware
         run: |
           cd workspace
-          mkdir -p device/samsung/a2corelte
+          mkdir -p device/samsung/a2corelte device/samsung/exynos7870-common vendor/samsung/a2corelte kernel/samsung/exynos7870
+          mkdir -p hardware/samsung hardware/samsung_slsi-cm/exynos hardware/samsung_slsi-cm/exynos5 hardware/samsung_slsi-cm/exynos7870 hardware/samsung_slsi-cm/openmax
           git clone https://github.com/Faisalahame/android_device_samsung_a2corelte.git -b lineage-17.1 device/samsung/a2corelte
-          mkdir -p device/samsung/exynos7870-common
           git clone https://github.com/Faisalahame/android_device_samsung_exynos7870-common.git device/samsung/exynos7870-common
-          mkdir -p vendor/samsung/a2corelte
           git clone https://github.com/Faisalahame/android_vendor_samsung_a2corelte.git vendor/samsung/a2corelte
-          mkdir -p kernel/samsung/exynos7870
           git clone https://github.com/Faisalahame/android_kernel_samsung_exynos7870.git kernel/samsung/exynos7870
-          mkdir -p hardware/samsung_slsi-cm/exynos5
-          git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos5.git hardware/samsung_slsi-cm/exynos5
-          mkdir -p hardware/samsung_slsi-cm/exynos
-          git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos.git hardware/samsung_slsi-cm/exynos
-          mkdir -p hardware/samsung_slsi-cm/openmax
-          git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_openmax.git hardware/samsung_slsi-cm/openmax
-          mkdir -p hardware/samsung_slsi-cm/exynos7870
-          git clone https://github.com/Exynos7870/android_hardware_samsung_slsi-cm_exynos7870.git -b lineage-16.0 hardware/samsung_slsi-cm/exynos7870
-          mkdir -p hardware/samsung
           git clone https://github.com/LineageOS/android_hardware_samsung.git -b lineage-17.1 hardware/samsung
+          git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos.git hardware/samsung_slsi-cm/exynos
+          git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_exynos5.git hardware/samsung_slsi-cm/exynos5
+          git clone https://github.com/Exynos7870/android_hardware_samsung_slsi-cm_exynos7870.git -b lineage-16.0 hardware/samsung_slsi-cm/exynos7870
+          git clone https://github.com/Faisalahame/android_hardware_samsung_slsi-cm_openmax.git hardware/samsung_slsi-cm/openmax
 
-      - name: Sync source code (with auto-retry)
+      - name: Sync source (auto-retry)
         run: |
           cd workspace
-          for i in {1..5}; do
-            repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags && break
-            echo "Server/Network error during sync. Retrying in 30 seconds... (Attempt $i)"
+          for i in 1 2 3 4 5; do
+            ~/bin/repo sync -c -j$(nproc) --force-sync --no-clone-bundle --no-tags && break
+            echo "sync failed, retry $i"
             sleep 30
           done
 
-      - name: Apply Pre-Build Patches
+      - name: Apply pre-build patches
         run: |
           cd workspace
-          
-          # Fix Error 6: Patch obsolete ANDROID_BUILD_TOP
-          find device/samsung -type f -name "*.mk" -exec sed -i 's/$(ANDROID_BUILD_TOP)/./g' {} +
-          find device/samsung -type f -name "*.mk" -exec sed -i 's/ANDROID_BUILD_TOP/./g' {} +
-          
-          # Fix Error 10: Create missing init_a2corelte.cpp
+          # Error 6: obsolete ANDROID_BUILD_TOP
+          find device/samsung vendor/samsung -type f -name "*.mk" -exec sed -i 's/\$(ANDROID_BUILD_TOP)/./g' {} +
+          # Error 10: missing init_a2corelte.cpp
           mkdir -p device/samsung/a2corelte/init
-          echo '#include <string>' > device/samsung/a2corelte/init/init_a2corelte.cpp
-          echo 'void vendor_load_properties() {}' >> device/samsung/a2corelte/init/init_a2corelte.cpp
-          
-          # Fix Error 11: Remove obsolete LOCAL_MODULE_TAGS
-          find hardware -type f -name "Android.mk" -exec sed -i '/LOCAL_MODULE_TAGS :=/d' {} +
-          
-          # Fix Error 13 (SILVER BULLET): Rename conflicting bluetooth service in Samsung trees
-          find . -path ./hardware/interfaces -prune -o -path ./system/bt -prune -o -type f \( -name "*.mk" -o -name "*.bp" -o -name "*.rc" \) -exec grep -l "android.hardware.bluetooth@1.0-service" {} + | xargs -r sed -i 's/android.hardware.bluetooth@1.0-service/samsung.disabled.bluetooth.service/g'
+          if [ ! -f device/samsung/a2corelte/init/init_a2corelte.cpp ]; then
+            printf '#include <string>\nvoid vendor_load_properties() {}\n' > device/samsung/a2corelte/init/init_a2corelte.cpp
+          fi
+          # Error 11: obsolete LOCAL_MODULE_TAGS
+          find hardware device vendor -type f -name "Android.mk" -exec sed -i '/LOCAL_MODULE_TAGS :=/d' {} +
+          # Error 13/14: duplicate bluetooth modules
+          grep -rl "android.hardware.bluetooth@1.0-service" --include="Android.mk" --include="Android.bp" --include="*.rc" . | grep -v "hardware/interfaces" | grep -v "system/bt" | xargs -r sed -i 's/android.hardware.bluetooth@1.0-service/samsung.disabled.bt.service/g'
+          grep -rl "android.hardware.bluetooth@1.0-impl" --include="Android.mk" --include="Android.bp" . | grep -v "hardware/interfaces" | grep -v "system/bt" | xargs -r sed -i 's/android.hardware.bluetooth@1.0-impl/samsung.disabled.bt.impl/g'
+          # Error 18/19: missing libdisplaymodule
+          find hardware/samsung_slsi-cm -type f \( -name "Android.mk" -o -name "Android.bp" \) -exec sed -i '/libdisplaymodule/d' {} +
 
-                # Fix Error 14: Rename conflicting bluetooth impl library
-          find . -path ./hardware/interfaces -prune -o -path ./system/bt -prune -o -type f \( -name "*.mk" -o -name "*.bp" -o -name "*.rc" \) -exec grep -l "android.hardware.bluetooth@1.0-impl" {} + | xargs -r sed -i 's/android.hardware.bluetooth@1.0-impl/samsung.disabled.bluetooth.impl/g'
-
-                # Fix Error 18: Replace missing libdisplaymodule with libcutils
-          find hardware/samsung_slsi-cm -type f \( -name "Android.mk" -o -name "Android.bp" \) -exec sed -i 's/libdisplaymodule/libcutils/g' {} +
-
-      - name: Build LineageOS 17.1
+      - name: Build ROM (cascade to guarantee a zip)
         run: |
           cd workspace
           source build/envsetup.sh
-      - name: Fix libdisplaymodule dependency
-        run: |
-          cd workspace
-          find hardware/samsung_slsi-cm -name 'Android.mk' -exec sed -i 's/libdisplaymodule//g' {} +
-          echo "Successfully patched libdisplaymodule dependencies."
-                    source build/envsetup.sh
-                    mka target-files-package -j$(nproc)
-                              TF=$(ls out/target/product/a2corelte/obj/PACKAGING/target_files/*.zip | head -n1)
-                              echo "Target files: $TF"
-                              build/tools/releasetools/ota_from_target_files --block -p out/host/linux-x86 "$TF" out/target/product/a2corelte/lineage-17.1-UNOFFICIAL-a2corelte.zip
-
-      - name: Upload ROM
-        uses: actions/upload-artifact@v4
-        with:
-          name: LineageOS-17.1-a2corelte
-          path: workspace/out/target/product/a2corelte/lineage-*.zip
-
-      - name: Upload build logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: |
-            workspace/out/verbose.log.gz
-            workspace/out/soong.log
-            workspace/out/build.log
-            workspace/out/error.log
-          retention-days: 5
+          breakfast a2corelte
+          mka bacon || echo "bacon failed, falling back"
+          if ! ls out/target/product/a2corelte/lineage-*.zip 2>/dev/null; then
+            mka otapackage || echo "otapackage failed, falling back"
+          fi
+          if ! ls out/target/product/a2corelte/lineage-*.zip 2>/dev/null; then
+            mka target-files-package
+            TF=$(ls out/target/product/a2corelte/obj/PACKAGING/target_files/*.zip | head -n1)
+            ZIP=out/target/product/a2corelte/lineage-17.1-$(date -u +%Y%m%d)-UNOFFICIAL-a2corelte.zip
+            build/make/tools/releasetools/ota_from_target_files -v --block -p out/host/linux-x86 "$TF" "$ZIP"
+          fi
+          ls -lh out/target/product/a2corelte/
+          ls out/target/product/a2corelte/lineage-*.zip || { echo "NO ZIP PRODUCED"; exit 1; }
+          md5sum out/target/product/a2corelte/lineage-*.zip | sed 's|out/target/product/a2corelte/||' > out/target/product/a2corelte/lineage.zip.md5sum
