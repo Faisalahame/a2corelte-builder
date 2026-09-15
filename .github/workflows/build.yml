@@ -108,3 +108,36 @@ jobs:
           ls -lh out/target/product/a2corelte/
           ls out/target/product/a2corelte/lineage-*.zip || { echo "NO ZIP PRODUCED"; exit 1; }
           md5sum out/target/product/a2corelte/lineage-*.zip | sed 's|out/target/product/a2corelte/||' > out/target/product/a2corelte/lineage.zip.md5sum
+
+      - name: Capture bacon dependency graph
+        if: always()
+        run: |
+          cd workspace
+          { echo "== bacon rule =="; grep -A5 "^build bacon:" out/combined-lineage_a2corelte.ninja || true
+            echo "== zip rules =="; grep -A5 "lineage-17.1-.*zip:" out/combined-lineage_a2corelte.ninja || true
+            echo "== disk =="; df -h . || true
+          } | tee out/bacon_graph.txt
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          if-no-files-found: ignore
+          path: |
+            workspace/out/bacon_graph.txt
+            workspace/out/verbose.log.gz
+            workspace/out/soong.log
+            workspace/out/error.log
+            workspace/out/build.log
+
+      - name: Upload ROM zip
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lineage-17.1-a2corelte-rom
+          if-no-files-found: ignore
+          path: |
+            workspace/out/target/product/a2corelte/lineage-*.zip
+            workspace/out/target/product/a2corelte/*.img
+            workspace/out/target/product/a2corelte/*.md5sum
