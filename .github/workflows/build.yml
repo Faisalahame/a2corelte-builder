@@ -90,6 +90,18 @@ jobs:
           # Error 18/19: missing libdisplaymodule
           find hardware/samsung_slsi-cm -type f \( -name "Android.mk" -o -name "Android.bp" \) -exec sed -i '/libdisplaymodule/d' {} +
 
+      - name: Extra disk cleanup
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache /usr/share/swift /usr/share/miniconda /usr/share/gradle* /usr/share/ant /usr/share/sbt
+          sudo apt clean -y || true
+          df -h /
+
+      - name: Fix bluetooth copy-files collision
+        run: |
+          cd workspace
+          grep -rl "android.hardware.bluetooth@1.0-service" device vendor --include="*.mk" | xargs -r sed -i '/android.hardware.bluetooth@1.0-service/d'
+          grep -rl "android.hardware.bluetooth@1.0-impl" device vendor --include="*.mk" | xargs -r sed -i '/android.hardware.bluetooth@1.0-impl/d'
+          echo "bluetooth copy-files lines removed"
       - name: Build ROM (cascade to guarantee a zip)
         run: |
           cd workspace
